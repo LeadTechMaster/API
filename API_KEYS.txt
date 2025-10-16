@@ -1,0 +1,27 @@
+Here are the real API keys with what data each provides:
+
+```bash
+# Mapbox - Interactive maps, geocoding, routing, satellite imagery
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1Ijoic3VwcG9ydG1vdmVkaW4iLCJhIjoiY21kZmdxdHh6MGQ2aDJqcHE2YTIwbTFrMiJ9.I1xkq82JXLMlgB02xT8LMw
+MAPBOX_ACCESS_TOKEN=pk.eyJ1Ijoic3VwcG9ydG1vdmVkaW4iLCJhIjoiY21kZmdxdHh6MGQ2aDJqcHE2YTIwbTFrMiJ9.I1xkq82JXLMlgB02xT8LMw
+
+# SerpApi - Google search results, trends, local businesses, news, images
+SERPAPI_API_KEY=850faf17d2e379f54ffdd1e300daaa7bdb1dee8abdc2536f1de3430d137e563c
+
+# Meta Ads Library - Facebook/Instagram ad data, competitor analysis, spend insights
+META_ADS_ACCESS_TOKEN=EAA40mj0BFQYBPXUVZAWCEv0ZBFOXjEmLUd3o26dfD1yzBbCg6PodDpKvYZA4O4WZBHIag9fcUxrmTtUwtzmDICOSJua4YrlSDjyDYI5JcsKfWKbHP2ZCRutPaq069nmN2hzCx3R6R6M1vniJ6x2RYU79cdBiyluoLkp3U4OdqmV6yOOujAGdMKCn0LPBAEUboIgZDZD
+META_ADS_APP_TOKEN=3998486727038214|Y7kOLPL2Wy8hridK2rO05qJmxRc
+
+# US Census Bureau - Population demographics, economic data, housing statistics
+CENSUS_API_KEY=ab4c49e507688c08e5346543c6d355a2e6b37c8c
+
+# Google Places API - Business listings, reviews, photos, hours, pricing
+GOOGLE_PLACES_API_KEY=AIzaSyAzyKYxbA7HWHTU9UV9Z-ELGRQTTeN9dkw
+
+# Brightlocal API - Local SEO data, citations, reviews, rankings
+BRIGHTLOCAL_API_KEY=2efdc9f13ec8a5b8fc0d83cddba7f5cc671ca3ec
+
+# Google OAuth - Authentication and user data
+GOOGLE_CLIENT_ID=654069877086-vlgip0hn22u65utgu7mfvjh9hqqai2bt.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+```
