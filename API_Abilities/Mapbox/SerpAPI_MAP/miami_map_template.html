@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miami Market Intelligence Map - SerpApi + Mapbox</title>
+    
+    <!-- Mapbox GL JS -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    
+    <!-- Chart.js for additional visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .map-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .map-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+        
+        .controls-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-group h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+        
+        .toggle-button {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .toggle-button:hover {
+            background: #e5e7eb;
+            border-color: #d1d5db;
+        }
+        
+        .toggle-button.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .chart-card h3 {
+            color: #374151;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #dc2626;
+        }
+        
+        .popup-content {
+            max-width: 300px;
+        }
+        
+        .popup-title {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .popup-rating {
+            color: #059669;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .popup-reviews {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .popup-address {
+            color: #374151;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        
+        .popup-phone {
+            color: #3b82f6;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .map-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Miami Market Intelligence Map</h1>
+            <p>SerpApi Data Visualization with Mapbox - Real-Time Geographic Analysis</p>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalBusinesses">-</div>
+                <div class="stat-label">Total Businesses</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgRating">-</div>
+                <div class="stat-label">Average Rating</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalReviews">-</div>
+                <div class="stat-label">Total Reviews</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="marketClusters">-</div>
+                <div class="stat-label">Market Clusters</div>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div class="map-wrapper">
+                <div id="map"></div>
+            </div>
+            
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>🗺️ Map Layers</h3>
+                    <button class="toggle-button active" id="businessesToggle" data-layer="businesses">
+                        📍 Business Locations
+                    </button>
+                    <button class="toggle-button" id="heatmapToggle" data-layer="heatmap">
+                        🔥 Rating Heatmap
+                    </button>
+                    <button class="toggle-button" id="clustersToggle" data-layer="clusters">
+                        🎯 Competitor Clusters
+                    </button>
+                    <button class="toggle-button" id="regionsToggle" data-layer="regions">
+                        🌎 Regional Interest
+                    </button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📊 Data Analysis</h3>
+                    <button class="toggle-button" id="densityToggle" data-layer="density">
+                        📈 Market Density
+                    </button>
+                    <button class="toggle-button" id="trendsToggle" data-layer="trends">
+                        📉 Trend Analysis
+                    </button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🔄 Actions</h3>
+                    <button class="toggle-button" id="refreshData" onclick="loadMapData()">
+                        🔄 Refresh Data
+                    </button>
+                    <button class="toggle-button" id="exportMap" onclick="exportMapData()">
+                        💾 Export Data
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>📊 Market Density by Area</h3>
+                <div class="chart-container">
+                    <canvas id="densityChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>⭐ Rating Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="ratingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Mapbox configuration
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZGVmYXVsdCIsImEiOiJjbGV4YW1wbGUifQ.example'; // Replace with real token
+        
+        // Initialize map
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [-80.1918, 25.7617], // Miami coordinates
+            zoom: 11
+        });
+        
+        // Map data storage
+        let mapData = {};
+        let activeLayers = {
+            businesses: true,
+            heatmap: false,
+            clusters: false,
+            regions: false,
+            density: false,
+            trends: false
+        };
+        
+        // Load map data from API
+        async function loadMapData() {
+            try {
+                document.getElementById('statsGrid').innerHTML = '<div class="loading">Loading map data...</div>';
+                
+                const response = await fetch('/api/miami-map-data');
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    mapData = data.data;
+                    renderMapLayers();
+                    updateStats();
+                    renderCharts();
+                } else {
+                    throw new Error(data.error || 'Failed to load map data');
+                }
+            } catch (error) {
+                console.error('Error loading map data:', error);
+                document.getElementById('statsGrid').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Render map layers based on active toggles
+        function renderMapLayers() {
+            // Clear existing layers
+            if (map.getLayer('businesses')) map.removeLayer('businesses');
+            if (map.getLayer('businesses-symbols')) map.removeLayer('businesses-symbols');
+            if (map.getLayer('heatmap')) map.removeLayer('heatmap');
+            if (map.getLayer('clusters')) map.removeLayer('clusters');
+            if (map.getLayer('regions')) map.removeLayer('regions');
+            
+            // Add business locations
+            if (activeLayers.businesses && mapData.business_locations?.features) {
+                map.addSource('businesses', {
+                    type: 'geojson',
+                    data: mapData.business_locations
+                });
+                
+                map.addLayer({
+                    id: 'businesses',
+                    type: 'circle',
+                    source: 'businesses',
+                    paint: {
+                        'circle-color': ['get', 'marker-color'],
+                        'circle-radius': [
+                            'case',
+                            ['==', ['get', 'marker-size'], 'large'], 12,
+                            ['==', ['get', 'marker-size'], 'medium'], 8,
+                            6
+                        ],
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff'
+                    }
+                });
+                
+                // Add click events
+                map.on('click', 'businesses', (e) => {
+                    const feature = e.features[0];
+                    new mapboxgl.Popup()
+                        .setLngLat(e.lngLat)
+                        .setHTML(`
+                            <div class="popup-content">
+                                <div class="popup-title">${feature.properties.name}</div>
+                                <div class="popup-rating">⭐ ${feature.properties.rating}/5</div>
+                                <div class="popup-reviews">${feature.properties.reviews} reviews</div>
+                                <div class="popup-address">${feature.properties.address}</div>
+                                <div class="popup-phone">📞 ${feature.properties.phone}</div>
+                            </div>
+                        `)
+                        .addTo(map);
+                });
+            }
+            
+            // Add heatmap
+            if (activeLayers.heatmap && mapData.rating_heatmap?.heatmap_data) {
+                map.addSource('heatmap', {
+                    type: 'geojson',
+                    data: {
+                        type: 'FeatureCollection',
+                        features: mapData.rating_heatmap.heatmap_data.map(point => ({
+                            type: 'Feature',
+                            properties: {
+                                intensity: point.intensity,
+                                rating: point.rating,
+                                reviews: point.reviews
+                            },
+                            geometry: {
+                                type: 'Point',
+                                coordinates: point.coordinates
+                            }
+                        }))
+                    }
+                });
+                
+                map.addLayer({
+                    id: 'heatmap',
+                    type: 'heatmap',
+                    source: 'heatmap',
+                    paint: {
+                        'heatmap-weight': ['interpolate', ['linear'], ['get', 'intensity'], 0, 0, 1, 1],
+                        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 15, 3],
+                        'heatmap-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['heatmap-density'],
+                            0, 'rgba(33,102,172,0)',
+                            0.2, 'rgb(103,169,207)',
+                            0.4, 'rgb(209,229,240)',
+                            0.6, 'rgb(253,219,199)',
+                            0.8, 'rgb(239,138,98)',
+                            1, 'rgb(178,24,43)'
+                        ],
+                        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 15, 20],
+                        'heatmap-opacity': 0.6
+                    }
+                });
+            }
+            
+            // Add competitor clusters
+            if (activeLayers.clusters && mapData.competitor_clusters?.clusters) {
+                const clusterFeatures = mapData.competitor_clusters.clusters.map(cluster => ({
+                    type: 'Feature',
+                    properties: {
+                        size: cluster.size,
+                        avg_rating: cluster.avg_rating,
+                        total_reviews: cluster.total_reviews,
+                        businesses: cluster.businesses.map(b => b[0]).join(', ')
+                    },
+                    geometry: {
+                        type: 'Point',
+                        coordinates: cluster.center
+                    }
+                }));
+                
+                map.addSource('clusters', {
+                    type: 'geojson',
+                    data: {
+                        type: 'FeatureCollection',
+                        features: clusterFeatures
+                    }
+                });
+                
+                map.addLayer({
+                    id: 'clusters',
+                    type: 'circle',
+                    source: 'clusters',
+                    paint: {
+                        'circle-color': '#8b5cf6',
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'size'], 2, 15, 10, 30],
+                        'circle-stroke-width': 3,
+                        'circle-stroke-color': '#ffffff',
+                        'circle-opacity': 0.8
+                    }
+                });
+            }
+            
+            // Add regional interest
+            if (activeLayers.regions && mapData.regional_interest?.features) {
+                map.addSource('regions', {
+                    type: 'geojson',
+                    data: mapData.regional_interest
+                });
+                
+                map.addLayer({
+                    id: 'regions',
+                    type: 'circle',
+                    source: 'regions',
+                    paint: {
+                        'circle-color': ['get', 'marker-color'],
+                        'circle-radius': [
+                            'case',
+                            ['==', ['get', 'marker-size'], 'large'], 15,
+                            ['==', ['get', 'marker-size'], 'medium'], 10,
+                            6
+                        ],
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff'
+                    }
+                });
+            }
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const businesses = mapData.business_locations?.features || [];
+            const clusters = mapData.competitor_clusters?.clusters || [];
+            
+            let totalReviews = 0;
+            let totalRating = 0;
+            let ratingCount = 0;
+            
+            businesses.forEach(business => {
+                if (business.properties.reviews) {
+                    totalReviews += business.properties.reviews;
+                }
+                if (business.properties.rating) {
+                    totalRating += business.properties.rating;
+                    ratingCount++;
+                }
+            });
+            
+            document.getElementById('totalBusinesses').textContent = businesses.length;
+            document.getElementById('avgRating').textContent = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : '-';
+            document.getElementById('totalReviews').textContent = totalReviews.toLocaleString();
+            document.getElementById('marketClusters').textContent = clusters.length;
+        }
+        
+        // Render charts
+        function renderCharts() {
+            renderDensityChart();
+            renderRatingChart();
+        }
+        
+        function renderDensityChart() {
+            const ctx = document.getElementById('densityChart').getContext('2d');
+            const densityData = mapData.market_density?.area_analysis || {};
+            
+            const areas = Object.keys(densityData);
+            const counts = areas.map(area => densityData[area].count);
+            const ratings = areas.map(area => densityData[area].avg_rating);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: areas,
+                    datasets: [{
+                        label: 'Business Count',
+                        data: counts,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderRatingChart() {
+            const ctx = document.getElementById('ratingChart').getContext('2d');
+            const businesses = mapData.business_locations?.features || [];
+            
+            const ratingRanges = {
+                '4.5-5.0': 0,
+                '4.0-4.4': 0,
+                '3.5-3.9': 0,
+                '3.0-3.4': 0,
+                'Below 3.0': 0
+            };
+            
+            businesses.forEach(business => {
+                const rating = business.properties.rating;
+                if (rating >= 4.5) ratingRanges['4.5-5.0']++;
+                else if (rating >= 4.0) ratingRanges['4.0-4.4']++;
+                else if (rating >= 3.5) ratingRanges['3.5-3.9']++;
+                else if (rating >= 3.0) ratingRanges['3.0-3.4']++;
+                else ratingRanges['Below 3.0']++;
+            });
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(ratingRanges),
+                    datasets: [{
+                        data: Object.values(ratingRanges),
+                        backgroundColor: [
+                            '#10b981',
+                            '#f59e0b',
+                            '#f97316',
+                            '#ef4444',
+                            '#6b7280'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Toggle layer visibility
+        function toggleLayer(layerName) {
+            activeLayers[layerName] = !activeLayers[layerName];
+            
+            // Update button state
+            const button = document.getElementById(layerName + 'Toggle');
+            if (activeLayers[layerName]) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+            
+            // Re-render layers
+            renderMapLayers();
+        }
+        
+        // Export map data
+        function exportMapData() {
+            const dataStr = JSON.stringify(mapData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'miami_market_data.json';
+            link.click();
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle buttons
+            document.querySelectorAll('.toggle-button[data-layer]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const layer = this.dataset.layer;
+                    if (layer !== 'refreshData' && layer !== 'exportMap') {
+                        toggleLayer(layer);
+                    }
+                });
+            });
+            
+            // Load initial data
+            loadMapData();
+        });
+    </script>
+</body>
+</html>
+
